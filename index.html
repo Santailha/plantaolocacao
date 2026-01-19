@@ -1,1 +1,26 @@
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Ilha - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="logo-container">
+                <img src="img/logo%20mesage.png" alt="Santa Ilha Imóveis">
+            </div>
+            <h2>Acesso Restrito</h2>
+            <form id="loginForm">
+                <input type="email" id="email" placeholder="E-mail" required>
+                <input type="password" id="password" placeholder="Senha" required>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">ENTRAR</button>
+            </form>
+            <p id="error-msg" style="color: red; font-size: 0.9em; margin-top: 10px; display: none;">Erro ao fazer login.</p>
+        </div>
+    </div>
+    <script type="module" src="login.js"></script>
+</body>
+</html>

@@ -2,9 +2,14 @@
 :root {
     --primary-blue: #3d357e;
     --primary-yellow: #edae0f;
+    --danger-red: #d32f2f;
+    --danger-bg: #ffdddd;
     --bg-light: #f4f6f8;
     --text-dark: #333;
     --white: #ffffff;
+    --gray-border: #ddd;
+    --shadow-soft: 0 4px 15px rgba(0,0,0,0.2);
+    --shadow-modal: 0 0 20px rgba(0,0,0,0.3);
 }
 
 body {
@@ -15,7 +20,56 @@ body {
     color: var(--text-dark);
 }
 
-/* === Estilos de Login === */
+/* === Componentes de Botão === */
+.btn-primary, .btn-secondary, .btn-danger {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: var(--white);
+}
+.btn-primary:hover {
+    background-color: #2c2661;
+}
+
+.btn-secondary {
+    background-color: var(--primary-yellow);
+    color: var(--primary-blue);
+}
+.btn-secondary:hover {
+    filter: brightness(0.95);
+}
+
+.btn-danger {
+    background-color: var(--danger-bg);
+    color: var(--danger-red);
+}
+.btn-danger:hover {
+    background-color: #ffcccc;
+}
+
+.btn-block {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* === Inputs === */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* === Login === */
 .login-wrapper {
     display: flex;
     justify-content: center;
@@ -28,55 +82,30 @@ body {
     background: var(--white);
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-soft);
     width: 100%;
     max-width: 400px;
     text-align: center;
 }
 
-.logo-container img {
+.login-logo {
     max-width: 200px;
     height: auto;
     margin-bottom: 20px;
 }
 
-/* === Componentes Globais === */
-.btn-primary {
-    background-color: var(--primary-blue);
-    color: var(--white);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-
-.btn-primary:hover {
-    background-color: #2c2661;
-}
-
-.btn-secondary {
-    background-color: var(--primary-yellow);
-    color: var(--primary-blue);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
+.login-error {
+    color: var(--danger-red);
+    font-size: 0.9em;
+    margin-top: 10px;
+    display: none;
 }
 
 /* === Layout do Dashboard (App) === */
-.app-container { display: flex; height: 100vh; }
+.app-container { 
+    display: flex; 
+    height: 100vh; 
+}
 
 .sidebar {
     width: 250px;
@@ -87,11 +116,16 @@ input {
     flex-direction: column;
 }
 
-.sidebar .logo-img { 
+.sidebar__logo-container {
     background: white; 
     padding: 10px; 
     border-radius: 5px; 
     margin-bottom: 30px; 
+}
+
+.sidebar__logo-img {
+    width: 100%;
+    display: block;
 }
 
 .nav-item {
@@ -108,12 +142,47 @@ input {
     font-weight: bold; 
 }
 
-.main-content { flex: 1; padding: 30px; overflow-y: auto; }
+.sidebar__logout {
+    margin-top: auto; 
+    cursor: pointer;
+    padding: 15px;
+    opacity: 0.8;
+}
+.sidebar__logout:hover { opacity: 1; }
+
+.main-content { 
+    flex: 1; 
+    padding: 30px; 
+    overflow-y: auto; 
+}
 
 .section { display: none; }
 .section.active { display: block; animation: fadeIn 0.3s; }
 
+/* === Componentes de Cartão e Formulário === */
+.card-panel {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
 /* === Calendário === */
+.calendar-controls {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -123,7 +192,7 @@ input {
 
 .calendar-day {
     background: white;
-    border: 1px solid #ddd;
+    border: 1px solid var(--gray-border);
     height: 120px;
     padding: 10px;
     border-radius: 5px;
@@ -138,7 +207,44 @@ input {
 
 /* === Tabela === */
 table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--gray-border); }
 th { background-color: var(--primary-blue); color: white; }
+
+/* === Modal === */
+.modal {
+    border: none;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow-modal);
+    width: 400px;
+    max-width: 90%;
+}
+.modal::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal__list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 15px 0;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.modal__item {
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal__footer {
+    text-align: right;
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

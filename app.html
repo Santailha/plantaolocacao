@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Ilha - Gestão</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <div class="sidebar">
+        <div class="logo-img">
+            <img src="img/logo%20mesage.png" alt="Logo" style="width: 100%;">
+        </div>
+        <div class="nav-item active" id="nav-escala">📅 Escala / Calendário</div>
+        <div class="nav-item" id="nav-colab">👥 Colaboradoras</div>
+        <div class="nav-item" id="nav-dash">📊 Dashboard</div>
+        <div style="margin-top: auto; cursor: pointer;" id="btn-logout">Sair</div>
+    </div>
+
+    <div class="main-content">
+        <div id="escala" class="section active">
+            <h2>Escala de Plantão</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-primary" id="prevMonth">&#8592; Anterior</button>
+                <h3 id="currentMonthLabel">Mês</h3>
+                <button class="btn-primary" id="nextMonth">Próximo &#8594;</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div id="colaboradoras" class="section">
+            <h2>Cadastro de Colaboradoras</h2>
+            <div style="background: white; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                <h4>Novo Cadastro</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: center;">
+                    <input type="text" placeholder="Nome" id="newAgentName">
+                    <input type="email" placeholder="E-mail" id="newAgentEmail">
+                    <input type="text" placeholder="ID Bitrix" id="newAgentBitrixId">
+                    <button class="btn-secondary" id="btnAddAgent">Salvar</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Nome</th><th>Email</th><th>ID Bitrix</th><th>Ações</th></tr>
+                </thead>
+                <tbody id="agentsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <ul id="statsList"><li>Carregando...</li></ul>
+        </div>
+    </div>
+</div>
+
+<dialog id="dayModal" style="border:none; border-radius:10px; padding:20px; box-shadow:0 0 20px rgba(0,0,0,0.3);">
+    <h3 id="modalDateTitle">Editar Escala</h3>
+    <div id="modalAgentsList" style="max-height:200px; overflow-y:auto; margin:10px 0;"></div>
+    <div style="text-align: right; margin-top: 10px;">
+        <button class="btn-primary" id="btnSaveSchedule">Salvar</button>
+        <button class="btn-secondary" onclick="document.getElementById('dayModal').close()">Cancelar</button>
+    </div>
+</dialog>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>

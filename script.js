@@ -25,11 +25,12 @@ function initApp() {
     renderCalendar(currentDate);
     loadAgents();
     
-    // Listeners de botões
+    // Listeners
     document.getElementById('prevMonth').onclick = () => changeMonth(-1);
     document.getElementById('nextMonth').onclick = () => changeMonth(1);
     document.getElementById('btnAddAgent').onclick = addAgent;
     document.getElementById('btnSaveSchedule').onclick = saveDaySchedule;
+    document.getElementById('btnCloseModal').onclick = () => document.getElementById('dayModal').close();
 }
 
 // --- NAVEGAÇÃO ---
@@ -42,11 +43,9 @@ function setupNavigation() {
 
     Object.keys(sections).forEach(navId => {
         document.getElementById(navId).addEventListener('click', (e) => {
-            // Remove active
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             
-            // Set active
             e.target.classList.add('active');
             document.getElementById(sections[navId]).classList.add('active');
         });
@@ -88,9 +87,8 @@ async function openDayModal(dateString) {
     document.getElementById('dayModal').showModal();
     
     const list = document.getElementById('modalAgentsList');
-    list.innerHTML = 'Carregando colaboradoras...';
+    list.innerHTML = 'Carregando...';
 
-    // Carrega colaboradoras para preencher o modal
     const q = query(collection(db, "colaboradoras"), orderBy("nome"));
     const snapshot = await getDocs(q);
     
@@ -98,6 +96,7 @@ async function openDayModal(dateString) {
     snapshot.forEach(docSnap => {
         const agent = docSnap.data();
         const div = document.createElement('div');
+        div.className = 'modal__item'; // Usa classe CSS agora
         div.innerHTML = `
             <input type="checkbox" id="chk-${agent.bitrixId}" value="${agent.bitrixId}">
             <label for="chk-${agent.bitrixId}">${agent.nome}</label>
@@ -135,12 +134,15 @@ async function addAgent() {
 
     await addDoc(collection(db, "colaboradoras"), { nome, email, bitrixId });
     alert("Adicionado!");
+    document.getElementById('newAgentName').value = '';
+    document.getElementById('newAgentEmail').value = '';
+    document.getElementById('newAgentBitrixId').value = '';
     loadAgents();
 }
 
 async function loadAgents() {
     const tbody = document.getElementById('agentsTableBody');
-    tbody.innerHTML = 'Carregando...';
+    tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
     
     const q = query(collection(db, "colaboradoras"), orderBy("nome"));
     const snapshot = await getDocs(q);
@@ -149,17 +151,17 @@ async function loadAgents() {
     snapshot.forEach(docSnap => {
         const data = docSnap.data();
         const tr = document.createElement('tr');
+        // Usa a classe .btn-danger em vez de style inline
         tr.innerHTML = `
             <td>${data.nome}</td>
             <td>${data.email}</td>
             <td>${data.bitrixId}</td>
-            <td><button class="btn-secondary" onclick="window.deleteAgent('${docSnap.id}')">Excluir</button></td>
+            <td><button class="btn-danger" onclick="window.deleteAgent('${docSnap.id}')">Excluir</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Expor função deleteAgent para o escopo global (pois é chamada no HTML inline)
 window.deleteAgent = async (id) => {
     if(confirm("Excluir?")) {
         await deleteDoc(doc(db, "colaboradoras", id));

@@ -1,18 +1,19 @@
-// script.js
+// script.js - Versão Debug & Fix
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, where, getDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
 
 let currentDate = new Date();
 let currentSelectedDay = null;
-let allAgentsCache = []; // Cache para não buscar do banco toda vez que abre o modal
-let currentQueue = []; // Array temporário para guardar a ordem no modal
+let allAgentsCache = []; 
+let currentQueue = [];
 
 // --- AUTH CHECK ---
 onAuthStateChanged(auth, (user) => {
     if (!user) {
         window.location.href = "index.html";
     } else {
+        console.log("Usuário logado:", user.email);
         initApp();
     }
 });
@@ -24,9 +25,15 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 // --- INICIALIZAÇÃO ---
 async function initApp() {
     setupNavigation();
-    await loadAgentsCache(); // Carrega agentes na memória uma vez
-    renderCalendar(currentDate);
-    loadAgentsTable(); // Carrega tabela da aba colaboradoras
+    try {
+        await loadAgentsCache();
+        console.log("Agentes carregados:", allAgentsCache); // Debug
+        
+        await renderCalendar(currentDate);
+        loadAgentsTable();
+    } catch (error) {
+        console.error("Erro na inicialização:", error);
+    }
     
     // Listeners
     document.getElementById('prevMonth').onclick = () => changeMonth(-1);
@@ -54,7 +61,13 @@ async function loadAgentsCache() {
     const snapshot = await getDocs(q);
     allAgentsCache = [];
     snapshot.forEach(doc => {
-        allAgentsCache.push({ id: doc.id, ...doc.data() });
+        // Garantimos que bitrixId seja tratado como String para comparação
+        const data = doc.data();
+        allAgentsCache.push({ 
+            id: doc.id, 
+            ...data, 
+            bitrixId: String(data.bitrixId).trim() 
+        });
     });
 }
 
@@ -63,26 +76,27 @@ async function renderCalendar(date) {
     const grid = document.getElementById('calendarGrid');
     const label = document.getElementById('currentMonthLabel');
     
-    grid.innerHTML = '<p>Carregando escala...</p>';
+    grid.innerHTML = '<p>Carregando dados...</p>';
     label.innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
     const year = date.getFullYear();
-    const month = date.getMonth(); // 0-11
+    const month = date.getMonth(); 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
-    // Buscar Escala do Mês Inteiro
-    // Firestore ID formato: YYYY-MM-DD
-    const startStr = `${year}-${String(month+1).padStart(2, '0')}-01`;
-    const endStr = `${year}-${String(month+1).padStart(2, '0')}-${daysInMonth}`;
-    
-    // Dica: Firestore não permite query de range em IDs nativamente fácil, 
-    // mas vamos buscar tudo da collection 'escala' e filtrar no cliente por enquanto (poucos dados)
-    // OU melhor: fazer getDocs de tudo e montar um mapa.
+    // Debug: verifique se estamos buscando o mês certo
+    const filterPrefix = `${year}-${String(month+1).padStart(2, '0')}`;
+    console.log(`Buscando escalas para o prefixo: ${filterPrefix}`);
+
     const scheduleMap = {};
     const scheduleSnap = await getDocs(collection(db, "escala"));
+    
     scheduleSnap.forEach(doc => {
-        if(doc.id.startsWith(`${year}-${String(month+1).padStart(2, '0')}`)) {
-            scheduleMap[doc.id] = doc.data().agentes || []; // Array de IDs Bitrix
+        // Filtra documentos que começam com "2026-01"
+        if(doc.id.startsWith(filterPrefix)) {
+            const data = doc.data();
+            // Garante que é um array, mesmo se vier vazio
+            scheduleMap[doc.id] = data.agentes || []; 
+            console.log(`Dados encontrados para ${doc.id}:`, data.agentes); // Debug
         }
     });
 
@@ -92,16 +106,22 @@ async function renderCalendar(date) {
         const dayString = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const dayAgentsIds = scheduleMap[dayString] || [];
         
-        // Mapear IDs para Nomes usando o Cache
+        // Mapeamento Robusto
         const dayAgentNames = dayAgentsIds.map(bitrixId => {
-            const agent = allAgentsCache.find(a => a.bitrixId == bitrixId); // Note: bitrixId pode ser string/number
-            return agent ? agent.nome.split(' ')[0] : 'Desconhecido';
+            // Compara String com String e remove espaços
+            const idToSearch = String(bitrixId).trim();
+            const agent = allAgentsCache.find(a => a.bitrixId === idToSearch);
+            
+            if (!agent) {
+                console.warn(`Agente com ID ${idToSearch} está na escala mas não no cadastro de colaboradoras.`);
+                return `ID: ${idToSearch}`;
+            }
+            return agent.nome.split(' ')[0];
         });
 
         const dayEl = document.createElement('div');
         dayEl.className = 'calendar-day';
         
-        // Monta o HTML do dia
         let previewHTML = '';
         if(dayAgentNames.length > 0) {
             dayAgentNames.forEach((name, idx) => {
@@ -129,10 +149,11 @@ function changeMonth(offset) {
     renderCalendar(currentDate);
 }
 
-// --- MODAL DE ESCALA (Nova Lógica) ---
+// --- MODAL ---
 function openDayModal(dateString, existingIds) {
     currentSelectedDay = dateString;
-    currentQueue = [...existingIds]; // Clona array existente
+    // Garante conversão para string
+    currentQueue = existingIds.map(id => String(id).trim());
 
     document.getElementById('modalDateTitle').innerText = `Escala: ${dateString.split('-').reverse().join('/')}`;
     document.getElementById('dayModal').showModal();
@@ -147,18 +168,17 @@ function renderModalLists() {
     listAvailable.innerHTML = '';
     listQueue.innerHTML = '';
 
-    // 1. Renderizar Fila (Quem já está selecionado, na ordem)
+    // Renderiza Fila
     currentQueue.forEach((bitrixId, index) => {
-        const agent = allAgentsCache.find(a => a.bitrixId == bitrixId);
-        if(!agent) return; // Segurança
+        const agent = allAgentsCache.find(a => a.bitrixId === bitrixId);
+        const displayName = agent ? agent.nome : `ID: ${bitrixId}`;
 
         const card = document.createElement('div');
         card.className = 'agent-card in-queue';
         card.innerHTML = `
-            <span>${agent.nome}</span>
+            <span>${displayName}</span>
             <div class="queue-number">${index + 1}</div>
         `;
-        // Ao clicar, remove da fila
         card.onclick = () => {
             currentQueue.splice(index, 1);
             renderModalLists();
@@ -166,14 +186,13 @@ function renderModalLists() {
         listQueue.appendChild(card);
     });
 
-    // 2. Renderizar Disponíveis (Quem NÃO está na fila)
+    // Renderiza Disponíveis
     const availableAgents = allAgentsCache.filter(a => !currentQueue.includes(a.bitrixId));
     
     availableAgents.forEach(agent => {
         const card = document.createElement('div');
         card.className = 'agent-card';
         card.innerHTML = `<span>${agent.nome}</span> <span>+</span>`;
-        // Ao clicar, adiciona ao final da fila
         card.onclick = () => {
             currentQueue.push(agent.bitrixId);
             renderModalLists();
@@ -186,16 +205,14 @@ async function saveDaySchedule() {
     if(!currentSelectedDay) return;
 
     try {
-        // Salva exatamente a ordem do array currentQueue
         await setDoc(doc(db, "escala", currentSelectedDay), {
-            agentes: currentQueue, // Array ordenado de IDs Bitrix
-            last_agent_index: -1, // Reseta o ponteiro do Round Robin
+            agentes: currentQueue,
+            last_agent_index: -1,
             updatedAt: new Date()
         });
 
         document.getElementById('dayModal').close();
-        renderCalendar(currentDate); // Atualiza visual
-        // alert("Escala salva!"); // Opcional
+        renderCalendar(currentDate);
     } catch(e) {
         console.error(e);
         alert("Erro ao salvar: " + e.message);
@@ -210,15 +227,19 @@ async function addAgent() {
 
     if(!nome || !bitrixId) return alert("Preencha campos!");
 
-    await addDoc(collection(db, "colaboradoras"), { nome, email, bitrixId });
+    // Salva bitrixId sempre como string e sem espaços
+    await addDoc(collection(db, "colaboradoras"), { 
+        nome, 
+        email, 
+        bitrixId: String(bitrixId).trim() 
+    });
     alert("Salvo!");
     
-    // Limpar
     document.getElementById('newAgentName').value = '';
     document.getElementById('newAgentEmail').value = '';
     document.getElementById('newAgentBitrixId').value = '';
     
-    await loadAgentsCache(); // Atualiza cache
+    await loadAgentsCache();
     loadAgentsTable();
 }
 
@@ -226,7 +247,6 @@ async function loadAgentsTable() {
     const tbody = document.getElementById('agentsTableBody');
     tbody.innerHTML = '';
     
-    // Usa o cache para popular a tabela (mais rápido)
     if(allAgentsCache.length === 0) await loadAgentsCache();
 
     allAgentsCache.forEach(agent => {

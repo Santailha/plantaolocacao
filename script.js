@@ -10,10 +10,36 @@ let allAgentsCache = [];
 let currentQueue = [];
 let rawLeadsCache = []; 
 
-onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.href = "index.html";
-    else initApp();
+// --- CONTROLE DE ACESSO E AUTENTICAÇÃO ---
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        window.location.href = "index.html";
+    } else {
+        // Busca o papel (role) do usuário logado
+        const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", user.uid)));
+        let userRole = "consultor"; // Padrão de segurança
+        userDoc.forEach(d => userRole = d.data().role);
+
+        applyRoleRestrictions(userRole);
+        initApp();
+    }
 });
+
+function applyRoleRestrictions(role) {
+    if (role === 'consultor') {
+        // Oculta os itens do menu lateral
+        const navColab = document.getElementById('nav-colab');
+        const navDash = document.getElementById('nav-dash');
+        if (navColab) navColab.style.display = 'none';
+        if (navDash) navDash.style.display = 'none';
+
+        // Remove as seções do DOM para impedir acesso via console
+        const secColab = document.getElementById('colaboradoras');
+        const secDash = document.getElementById('dashboard');
+        if (secColab) secColab.remove();
+        if (secDash) secDash.remove();
+    }
+}
 
 document.getElementById('btn-logout').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
 
@@ -23,25 +49,38 @@ async function initApp() {
         await loadAgentsCache();
         await renderCalendar(currentDate);
         loadAgentsTable();
-        await initDashboard(); 
-    } catch (error) { console.error("Erro na inicialização:", error); }
+        
+        // Só inicializa o dashboard se a seção existir (não for consultor)
+        if (document.getElementById('dashboard')) {
+            await initDashboard(); 
+        }
+    } catch (error) { 
+        console.error("Erro na inicialização:", error); 
+    }
     
     document.getElementById('prevMonth').onclick = () => changeMonth(-1);
     document.getElementById('nextMonth').onclick = () => changeMonth(1);
-    document.getElementById('btnAddAgent').onclick = addAgent;
-    document.getElementById('btnSaveSchedule').onclick = saveDaySchedule;
+    
+    const btnAddAgent = document.getElementById('btnAddAgent');
+    if (btnAddAgent) btnAddAgent.onclick = addAgent;
+
+    const btnSaveSchedule = document.getElementById('btnSaveSchedule');
+    if (btnSaveSchedule) btnSaveSchedule.onclick = saveDaySchedule;
 }
 
 function setupNavigation() {
     const sections = { 'nav-escala': 'escala', 'nav-colab': 'colaboradoras', 'nav-dash': 'dashboard' };
     Object.keys(sections).forEach(navId => {
         const el = document.getElementById(navId);
-        if(el) el.onclick = (e) => {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            e.target.classList.add('active');
-            document.getElementById(sections[navId]).classList.add('active');
-        };
+        if(el) {
+            el.onclick = (e) => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                e.target.classList.add('active');
+                const targetSection = document.getElementById(sections[navId]);
+                if (targetSection) targetSection.classList.add('active');
+            };
+        }
     });
 }
 
@@ -73,6 +112,7 @@ async function addAgent() {
 
 async function loadAgentsTable() {
     const tbody = document.getElementById('agentsTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     allAgentsCache.forEach(agent => {
         const tr = document.createElement('tr');
@@ -91,7 +131,7 @@ async function renderCalendar(date) {
 
     const year = date.getFullYear();
     const month = date.getMonth(); 
-    const firstDayIndex = new Date(year, month, 1).getDay(); // Alinhamento com o dia da semana
+    const firstDayIndex = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     const filterPrefix = `${year}-${String(month+1).padStart(2, '0')}`;
@@ -101,7 +141,6 @@ async function renderCalendar(date) {
     
     grid.innerHTML = '';
 
-    // Espaços vazios para alinhar o dia 1
     for (let i = 0; i < firstDayIndex; i++) {
         const emptyDiv = document.createElement('div');
         emptyDiv.className = 'calendar-day empty';
@@ -119,6 +158,8 @@ async function renderCalendar(date) {
         const dayEl = document.createElement('div');
         dayEl.className = 'calendar-day';
         dayEl.innerHTML = `<div class="day-header"><span>${i}</span>${dayAgentNames.length > 0 ? '🟢' : '⚪'}</div><div class="day-preview">${dayAgentNames.map((n, idx) => `<div class="preview-item"><strong>${idx+1}º</strong> ${n}</div>`).join('')}</div>`;
+        
+        // Apenas usuários que podem ver o modal de edição (admins/recepção se houver)
         dayEl.onclick = () => openDayModal(dayString, dayAgentsIds);
         grid.appendChild(dayEl);
     }
@@ -144,6 +185,7 @@ async function initDashboard() {
 
 async function loadCustomDashboard() {
     const container = document.getElementById('dashboardContainer');
+    if (!container) return;
     const start = document.getElementById('dashStartDate').value;
     const end = document.getElementById('dashEndDate').value;
     container.innerHTML = '<div style="padding:20px; text-align:center;">Buscando dados...</div>';
@@ -166,6 +208,7 @@ async function loadCustomDashboard() {
 
 function renderStatsTable() {
     const container = document.getElementById('dashboardContainer');
+    if (!container) return;
     const agentFilter = document.getElementById('dashAgentFilter').value;
     const summary = {};
     const filteredLeads = agentFilter === 'todos' ? rawLeadsCache : rawLeadsCache.filter(l => l.consultorId === agentFilter);
@@ -192,6 +235,7 @@ function renderStatsTable() {
 window.openLeadDetails = (nome, leads) => {
     const modal = document.getElementById('leadDetailsModal');
     const container = document.getElementById('leadListContainer');
+    if (!modal || !container) return;
     document.getElementById('modalLeadTitle').innerText = `Leads de ${nome}`;
     let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
     leads.forEach(l => {
@@ -211,18 +255,21 @@ function updateAgentSelect() {
     });
 }
 
-// Funções de Modal de Escala omitidas para brevidade, mas devem permanecer iguais
+// --- MODAL DE ESCALA ---
 function openDayModal(dateString, existingIds) {
+    const modal = document.getElementById('dayModal');
+    if (!modal) return;
     currentSelectedDay = dateString;
     currentQueue = existingIds.map(id => String(id).trim());
     document.getElementById('modalDateTitle').innerText = `Escala: ${dateString.split('-').reverse().join('/')}`;
-    document.getElementById('dayModal').showModal();
+    modal.showModal();
     renderModalLists();
 }
 
 function renderModalLists() {
     const listAvailable = document.getElementById('listAvailable');
     const listQueue = document.getElementById('listQueue');
+    if (!listAvailable || !listQueue) return;
     listAvailable.innerHTML = ''; listQueue.innerHTML = '';
     currentQueue.forEach((bitrixId, index) => {
         const agent = allAgentsCache.find(a => a.bitrixId === bitrixId);

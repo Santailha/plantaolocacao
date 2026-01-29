@@ -1,26 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Santa Ilha - Login</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Santa Ilha - Login</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-    <div class="login-wrapper">
-        <div class="login-card">
-            <div class="logo-container">
-                <img src="img/logo%20mesage.png" alt="Santa Ilha Imóveis" class="login-logo">
-            </div>
-            <h2>Plantão - Locação</h2>
-            <form id="loginForm">
-                <input type="email" id="email" placeholder="E-mail" required>
-                <input type="password" id="password" placeholder="Senha" required>
-                <button type="submit" class="btn-primary btn-block">ENTRAR</button>
-            </form>
-            <p id="error-msg" class="login-error">Erro ao fazer login.</p>
-        </div>
-    </div>
-    <script type="module" src="login.js"></script>
+
+<body class="login-page">
+  <main class="login-wrapper">
+    <section class="login-card" aria-label="Login">
+      <div class="logo-container">
+        <img src="img/logo%20mesage.png" alt="Santa Ilha Imóveis" class="login-logo" />
+      </div>
+
+      <h2 class="login-title">Plantão - Locação</h2>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <label class="sr-only" for="email">E-mail</label>
+        <input type="email" id="email" placeholder="E-mail" autocomplete="username" required />
+
+        <label class="sr-only" for="password">Senha</label>
+        <input type="password" id="password" placeholder="Senha" autocomplete="current-password" required />
+
+        <button type="submit" class="btn-primary btn-block">ENTRAR</button>
+        <p id="error-msg" class="login-error" role="alert" aria-live="polite"></p>
+      </form>
+
+      <p class="login-footnote muted">Acesso restrito à equipe.</p>
+    </section>
+  </main>
+
+  <script type="module" src="login.js"></script>
 </body>
 </html>

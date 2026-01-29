@@ -1,3 +1,4 @@
+// script.js integral
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
 import { 
@@ -10,20 +11,13 @@ let allAgentsCache = [];
 let currentQueue = [];
 let rawLeadsCache = []; 
 
-// --- CONTROLO DE AUTENTICAÇÃO ---
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "index.html";
-    } else {
-        initApp();
-    }
+    if (!user) window.location.href = "index.html";
+    else initApp();
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-    signOut(auth).then(() => window.location.href = "index.html");
-});
+document.getElementById('btn-logout').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
 
-// --- INICIALIZAÇÃO ---
 async function initApp() {
     setupNavigation();
     try {
@@ -31,9 +25,7 @@ async function initApp() {
         await renderCalendar(currentDate);
         loadAgentsTable();
         await initDashboard(); 
-    } catch (error) {
-        console.error("Erro na inicialização:", error);
-    }
+    } catch (error) { console.error(error); }
     
     document.getElementById('prevMonth').onclick = () => changeMonth(-1);
     document.getElementById('nextMonth').onclick = () => changeMonth(1);
@@ -44,16 +36,16 @@ async function initApp() {
 function setupNavigation() {
     const sections = { 'nav-escala': 'escala', 'nav-colab': 'colaboradoras', 'nav-dash': 'dashboard' };
     Object.keys(sections).forEach(navId => {
-        document.getElementById(navId).addEventListener('click', (e) => {
+        const el = document.getElementById(navId);
+        if(el) el.onclick = (e) => {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             e.target.classList.add('active');
             document.getElementById(sections[navId]).classList.add('active');
-        });
+        };
     });
 }
 
-// --- GESTÃO DE AGENTES ---
 async function loadAgentsCache() {
     const q = query(collection(db, "colaboradoras"), orderBy("nome"));
     const snapshot = await getDocs(q);
@@ -77,7 +69,6 @@ async function initDashboard() {
         loadCustomDashboard(); 
     };
     if(agentFilter) agentFilter.onchange = () => renderStatsTable();
-
     await loadCustomDashboard();
 }
 
@@ -85,12 +76,9 @@ async function loadCustomDashboard() {
     const container = document.getElementById('dashboardContainer');
     const start = document.getElementById('dashStartDate').value;
     const end = document.getElementById('dashEndDate').value;
-    
-    container.innerHTML = '<div style="padding:20px; text-align:center;">A procurar dados...</div>';
-
+    container.innerHTML = '<div style="padding:20px; text-align:center;">Buscando dados...</div>';
     let q;
     const historicoRef = collection(db, "historico_leads");
-
     try {
         if (start && end) {
             q = query(historicoRef, where("dataString", ">=", start), where("dataString", "<=", end), orderBy("dataString", "desc"), orderBy("dataHora", "desc"));
@@ -98,26 +86,19 @@ async function loadCustomDashboard() {
             const hoje = new Date().toISOString().split('T')[0];
             q = query(historicoRef, where("dataString", "==", hoje), orderBy("dataHora", "desc"));
         }
-
         const snap = await getDocs(q);
         rawLeadsCache = [];
         snap.forEach(doc => rawLeadsCache.push(doc.data()));
-        
         updateAgentSelect();
         renderStatsTable();
-    } catch (error) {
-        console.error("Erro dashboard:", error);
-        container.innerHTML = `<p style="color:red; padding:20px;">Erro: ${error.message}.</p>`;
-    }
+    } catch (e) { container.innerHTML = `<p style="color:red; padding:20px;">Erro: ${e.message}</p>`; }
 }
 
 function renderStatsTable() {
     const container = document.getElementById('dashboardContainer');
     const agentFilter = document.getElementById('dashAgentFilter').value;
     const summary = {};
-    
     const filteredLeads = agentFilter === 'todos' ? rawLeadsCache : rawLeadsCache.filter(l => l.consultorId === agentFilter);
-
     filteredLeads.forEach(lead => {
         const cId = lead.consultorId;
         if (!summary[cId]) {
@@ -127,14 +108,10 @@ function renderStatsTable() {
         summary[cId].leads.push(lead);
         summary[cId].total++;
     });
-
     const sorted = Object.values(summary).sort((a, b) => b.total - a.total);
-
-    let html = `<table style="width:100%; border-collapse: collapse;"><thead><tr style="background: #3d357e; color: white;"><th style="padding:15px; text-align:left;">Consultora</th><th style="padding:15px; text-align:center;">Total de Leads</th></tr></thead><tbody>`;
-
-    if (sorted.length === 0) {
-        html += `<tr><td colspan="2" style="padding:20px; text-align:center;">Sem registos.</td></tr>`;
-    } else {
+    let html = `<table style="width:100%; border-collapse: collapse;"><thead><tr style="background: #3d357e; color: white;"><th style="padding:15px; text-align:left;">Consultora</th><th style="padding:15px; text-align:center;">Total Leads</th></tr></thead><tbody>`;
+    if (sorted.length === 0) html += `<tr><td colspan="2" style="padding:20px; text-align:center;">Nenhum lead encontrado.</td></tr>`;
+    else {
         sorted.forEach(row => {
             html += `<tr style="border-bottom: 1px solid #eee;"><td style="padding:15px;">${row.nome}</td><td style="padding:15px; text-align:center; font-weight:bold; color:#3d357e; cursor:pointer; text-decoration:underline;" onclick='openLeadDetails("${row.nome}", ${JSON.stringify(row.leads)})'>${row.total}</td></tr>`;
         });
@@ -160,25 +137,35 @@ function updateAgentSelect() {
     if (!select || select.options.length > 1) return;
     allAgentsCache.forEach(a => {
         const opt = document.createElement('option');
-        opt.value = a.bitrixId;
-        opt.text = a.nome;
-        select.add(opt);
+        opt.value = a.bitrixId; opt.text = a.nome; select.add(opt);
     });
 }
 
-// --- CALENDÁRIO E ESCALAS ---
+// --- CALENDÁRIO (ESCALA) ---
 async function renderCalendar(date) {
     const grid = document.getElementById('calendarGrid');
     const label = document.getElementById('currentMonthLabel');
     label.innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     const year = date.getFullYear();
     const month = date.getMonth(); 
+    
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
     const filterPrefix = `${year}-${String(month+1).padStart(2, '0')}`;
-    const scheduleMap = {};
     const scheduleSnap = await getDocs(collection(db, "escala"));
+    const scheduleMap = {};
     scheduleSnap.forEach(doc => { if(doc.id.startsWith(filterPrefix)) scheduleMap[doc.id] = doc.data().agentes || []; });
+    
     grid.innerHTML = '';
+
+    for (let i = 0; i < firstDayOfMonth; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'calendar-day empty';
+        emptyDiv.style.visibility = 'hidden'; 
+        grid.appendChild(emptyDiv);
+    }
+
     for(let i = 1; i <= daysInMonth; i++) {
         const dayString = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const dayAgentsIds = scheduleMap[dayString] || [];
@@ -195,7 +182,6 @@ async function renderCalendar(date) {
 }
 
 function changeMonth(offset) { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(currentDate); }
-
 function openDayModal(dateString, existingIds) {
     currentSelectedDay = dateString;
     currentQueue = existingIds.map(id => String(id).trim());
@@ -203,7 +189,6 @@ function openDayModal(dateString, existingIds) {
     document.getElementById('dayModal').showModal();
     renderModalLists();
 }
-
 function renderModalLists() {
     const listAvailable = document.getElementById('listAvailable');
     const listQueue = document.getElementById('listQueue');
@@ -224,13 +209,11 @@ function renderModalLists() {
         listAvailable.appendChild(card);
     });
 }
-
 async function saveDaySchedule() {
     await setDoc(doc(db, "escala", currentSelectedDay), { agentes: currentQueue, last_agent_index: -1, updatedAt: new Date() });
     document.getElementById('dayModal').close();
     renderCalendar(currentDate);
 }
-
 async function addAgent() {
     const nome = document.getElementById('newAgentName').value;
     const bitrixId = document.getElementById('newAgentBitrixId').value;
@@ -238,7 +221,6 @@ async function addAgent() {
     await addDoc(collection(db, "colaboradoras"), { nome, email: document.getElementById('newAgentEmail').value, bitrixId: String(bitrixId).trim() });
     await loadAgentsCache(); loadAgentsTable();
 }
-
 async function loadAgentsTable() {
     const tbody = document.getElementById('agentsTableBody');
     tbody.innerHTML = '';
@@ -248,5 +230,4 @@ async function loadAgentsTable() {
         tbody.appendChild(tr);
     });
 }
-
 window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "colaboradoras", id)); await loadAgentsCache(); loadAgentsTable(); } };

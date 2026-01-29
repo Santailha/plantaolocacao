@@ -1,4 +1,3 @@
-// script.js integral
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
 import { 
@@ -25,7 +24,7 @@ async function initApp() {
         await renderCalendar(currentDate);
         loadAgentsTable();
         await initDashboard(); 
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error("Erro na inicialização:", error); }
     
     document.getElementById('prevMonth').onclick = () => changeMonth(-1);
     document.getElementById('nextMonth').onclick = () => changeMonth(1);
@@ -46,6 +45,7 @@ function setupNavigation() {
     });
 }
 
+// --- GESTÃO DE COLABORADORAS ---
 async function loadAgentsCache() {
     const q = query(collection(db, "colaboradoras"), orderBy("nome"));
     const snapshot = await getDocs(q);
@@ -56,7 +56,77 @@ async function loadAgentsCache() {
     });
 }
 
-// --- DASHBOARD ANALÍTICO ---
+async function addAgent() {
+    const nome = document.getElementById('newAgentName').value;
+    const bitrixId = document.getElementById('newAgentBitrixId').value;
+    if(!nome || !bitrixId) return alert("Preencha nome e ID Bitrix!");
+    await addDoc(collection(db, "colaboradoras"), { 
+        nome, 
+        email: document.getElementById('newAgentEmail').value, 
+        bitrixId: String(bitrixId).trim() 
+    });
+    document.getElementById('newAgentName').value = '';
+    document.getElementById('newAgentEmail').value = '';
+    document.getElementById('newAgentBitrixId').value = '';
+    await loadAgentsCache(); loadAgentsTable();
+}
+
+async function loadAgentsTable() {
+    const tbody = document.getElementById('agentsTableBody');
+    tbody.innerHTML = '';
+    allAgentsCache.forEach(agent => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${agent.nome}</td><td>${agent.email || '-'}</td><td>${agent.bitrixId}</td><td><button class="btn-danger" onclick="window.deleteAgent('${agent.id}')">Excluir</button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+window.deleteAgent = async (id) => { if(confirm("Excluir colaboradora?")) { await deleteDoc(doc(db, "colaboradoras", id)); await loadAgentsCache(); loadAgentsTable(); } };
+
+// --- CALENDÁRIO (ESCALA) ---
+async function renderCalendar(date) {
+    const grid = document.getElementById('calendarGrid');
+    const label = document.getElementById('currentMonthLabel');
+    label.innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    const year = date.getFullYear();
+    const month = date.getMonth(); 
+    const firstDayIndex = new Date(year, month, 1).getDay(); // Alinhamento com o dia da semana
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const filterPrefix = `${year}-${String(month+1).padStart(2, '0')}`;
+    const scheduleSnap = await getDocs(collection(db, "escala"));
+    const scheduleMap = {};
+    scheduleSnap.forEach(doc => { if(doc.id.startsWith(filterPrefix)) scheduleMap[doc.id] = doc.data().agentes || []; });
+    
+    grid.innerHTML = '';
+
+    // Espaços vazios para alinhar o dia 1
+    for (let i = 0; i < firstDayIndex; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'calendar-day empty';
+        emptyDiv.style.visibility = 'hidden'; 
+        grid.appendChild(emptyDiv);
+    }
+
+    for(let i = 1; i <= daysInMonth; i++) {
+        const dayString = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const dayAgentsIds = scheduleMap[dayString] || [];
+        const dayAgentNames = dayAgentsIds.map(bitrixId => {
+            const agent = allAgentsCache.find(a => a.bitrixId === String(bitrixId).trim());
+            return agent ? agent.nome.split(' ')[0] : `ID: ${bitrixId}`;
+        });
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.innerHTML = `<div class="day-header"><span>${i}</span>${dayAgentNames.length > 0 ? '🟢' : '⚪'}</div><div class="day-preview">${dayAgentNames.map((n, idx) => `<div class="preview-item"><strong>${idx+1}º</strong> ${n}</div>`).join('')}</div>`;
+        dayEl.onclick = () => openDayModal(dayString, dayAgentsIds);
+        grid.appendChild(dayEl);
+    }
+}
+
+function changeMonth(offset) { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(currentDate); }
+
+// --- DASHBOARD ---
 async function initDashboard() {
     const btnFilter = document.getElementById('btnFilterDash');
     const btnClear = document.getElementById('btnClearDash');
@@ -109,11 +179,11 @@ function renderStatsTable() {
         summary[cId].total++;
     });
     const sorted = Object.values(summary).sort((a, b) => b.total - a.total);
-    let html = `<table style="width:100%; border-collapse: collapse;"><thead><tr style="background: #3d357e; color: white;"><th style="padding:15px; text-align:left;">Consultora</th><th style="padding:15px; text-align:center;">Total Leads</th></tr></thead><tbody>`;
-    if (sorted.length === 0) html += `<tr><td colspan="2" style="padding:20px; text-align:center;">Nenhum lead encontrado.</td></tr>`;
+    let html = `<table><thead><tr style="background: var(--primary-blue); color: white;"><th>Consultora</th><th style="text-align:center;">Total Leads</th></tr></thead><tbody>`;
+    if (sorted.length === 0) html += `<tr><td colspan="2" style="text-align:center;">Nenhum lead encontrado.</td></tr>`;
     else {
         sorted.forEach(row => {
-            html += `<tr style="border-bottom: 1px solid #eee;"><td style="padding:15px;">${row.nome}</td><td style="padding:15px; text-align:center; font-weight:bold; color:#3d357e; cursor:pointer; text-decoration:underline;" onclick='openLeadDetails("${row.nome}", ${JSON.stringify(row.leads)})'>${row.total}</td></tr>`;
+            html += `<tr><td>${row.nome}</td><td style="text-align:center; font-weight:bold; color:var(--primary-blue); cursor:pointer; text-decoration:underline;" onclick='openLeadDetails("${row.nome}", ${JSON.stringify(row.leads)})'>${row.total}</td></tr>`;
         });
     }
     container.innerHTML = html + `</tbody></table>`;
@@ -126,7 +196,7 @@ window.openLeadDetails = (nome, leads) => {
     let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
     leads.forEach(l => {
         const data = l.dataHora?.toDate ? l.dataHora.toDate().toLocaleString('pt-BR') : l.dataHora;
-        html += `<div style="background:#f4f4f9; padding:10px; border-left:4px solid #edae0f; border-radius:4px;"><strong>Lead #${l.leadId || 'N/A'}</strong><br><small>Data/Hora: ${data}</small></div>`;
+        html += `<div style="background:#f4f4f9; padding:10px; border-left:4px solid var(--primary-yellow); border-radius:4px;"><strong>Lead #${l.leadId || 'N/A'}</strong><br><small>Data/Hora: ${data}</small></div>`;
     });
     container.innerHTML = html + '</div>';
     modal.showModal();
@@ -141,47 +211,7 @@ function updateAgentSelect() {
     });
 }
 
-// --- CALENDÁRIO (ESCALA) ---
-async function renderCalendar(date) {
-    const grid = document.getElementById('calendarGrid');
-    const label = document.getElementById('currentMonthLabel');
-    label.innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    const year = date.getFullYear();
-    const month = date.getMonth(); 
-    
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    const filterPrefix = `${year}-${String(month+1).padStart(2, '0')}`;
-    const scheduleSnap = await getDocs(collection(db, "escala"));
-    const scheduleMap = {};
-    scheduleSnap.forEach(doc => { if(doc.id.startsWith(filterPrefix)) scheduleMap[doc.id] = doc.data().agentes || []; });
-    
-    grid.innerHTML = '';
-
-    for (let i = 0; i < firstDayOfMonth; i++) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'calendar-day empty';
-        emptyDiv.style.visibility = 'hidden'; 
-        grid.appendChild(emptyDiv);
-    }
-
-    for(let i = 1; i <= daysInMonth; i++) {
-        const dayString = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const dayAgentsIds = scheduleMap[dayString] || [];
-        const dayAgentNames = dayAgentsIds.map(bitrixId => {
-            const agent = allAgentsCache.find(a => a.bitrixId === String(bitrixId).trim());
-            return agent ? agent.nome.split(' ')[0] : `ID: ${bitrixId}`;
-        });
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day';
-        dayEl.innerHTML = `<div class="day-header"><span>${i}</span>${dayAgentNames.length > 0 ? '🟢' : '⚪'}</div><div class="day-preview">${dayAgentNames.map((n, idx) => `<div class="preview-item"><strong>${idx+1}º</strong> ${n}</div>`).join('')}</div>`;
-        dayEl.onclick = () => openDayModal(dayString, dayAgentsIds);
-        grid.appendChild(dayEl);
-    }
-}
-
-function changeMonth(offset) { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(currentDate); }
+// Funções de Modal de Escala omitidas para brevidade, mas devem permanecer iguais
 function openDayModal(dateString, existingIds) {
     currentSelectedDay = dateString;
     currentQueue = existingIds.map(id => String(id).trim());
@@ -189,6 +219,7 @@ function openDayModal(dateString, existingIds) {
     document.getElementById('dayModal').showModal();
     renderModalLists();
 }
+
 function renderModalLists() {
     const listAvailable = document.getElementById('listAvailable');
     const listQueue = document.getElementById('listQueue');
@@ -209,25 +240,9 @@ function renderModalLists() {
         listAvailable.appendChild(card);
     });
 }
+
 async function saveDaySchedule() {
     await setDoc(doc(db, "escala", currentSelectedDay), { agentes: currentQueue, last_agent_index: -1, updatedAt: new Date() });
     document.getElementById('dayModal').close();
     renderCalendar(currentDate);
 }
-async function addAgent() {
-    const nome = document.getElementById('newAgentName').value;
-    const bitrixId = document.getElementById('newAgentBitrixId').value;
-    if(!nome || !bitrixId) return alert("Preencha os campos!");
-    await addDoc(collection(db, "colaboradoras"), { nome, email: document.getElementById('newAgentEmail').value, bitrixId: String(bitrixId).trim() });
-    await loadAgentsCache(); loadAgentsTable();
-}
-async function loadAgentsTable() {
-    const tbody = document.getElementById('agentsTableBody');
-    tbody.innerHTML = '';
-    allAgentsCache.forEach(agent => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${agent.nome}</td><td>${agent.email || '-'}</td><td>${agent.bitrixId}</td><td><button class="btn-danger" onclick="window.deleteAgent('${agent.id}')">Excluir</button></td>`;
-        tbody.appendChild(tr);
-    });
-}
-window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "colaboradoras", id)); await loadAgentsCache(); loadAgentsTable(); } };

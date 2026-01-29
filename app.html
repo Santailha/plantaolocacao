@@ -62,21 +62,24 @@
                 <h2 style="color: #3d357e; margin: 0;">Dashboard de Performance</h2>
             </div>
 
-            <div class="dashboard-controls" style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-                <div>
+            <div class="dashboard-controls">
+                <div class="control-group">
                     <label>Início:</label>
-                    <input type="date" id="dashStartDate" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <input type="date" id="dashStartDate">
                 </div>
-                <div>
+                <div class="control-group">
                     <label>Fim:</label>
-                    <input type="date" id="dashEndDate" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                    <input type="date" id="dashEndDate">
                 </div>
-                <button class="btn-primary" id="btnFilterDash" style="padding: 10px 20px;">Filtrar Período</button>
-                <button class="btn-secondary" id="btnClearDash" style="padding: 10px 20px;">Hoje</button>
+                <button class="btn-primary" id="btnFilterDash">Filtrar Período</button>
+                <button class="btn-secondary" id="btnClearDash">Hoje</button>
                 
-                <select id="dashAgentFilter" style="margin-left: auto; padding: 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 200px;">
-                    <option value="todos">Todas as Consultoras</option>
-                </select>
+                <div class="control-group" style="margin-left: auto; min-width: 200px;">
+                    <label>Filtrar Consultora:</label>
+                    <select id="dashAgentFilter">
+                        <option value="todos">Todas as Consultoras</option>
+                    </select>
+                </div>
             </div>
 
             <div id="dashboardContainer" class="card-panel" style="overflow-x: auto; background: white; padding: 0;">

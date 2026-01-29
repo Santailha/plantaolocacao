@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
 import { 
-    collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, where 
+    collection, getDocs, query, orderBy, where, doc, setDoc, addDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
 
 let currentDate = new Date();

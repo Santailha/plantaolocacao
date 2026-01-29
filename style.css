@@ -283,3 +283,18 @@ dialog.modal {
     from { opacity: 0; } 
     to { opacity: 1; } 
 }
+
+/* style.css - Adicionado ao final do arquivo */
+
+/* Esconde os itens de menu por padrão para segurança visual */
+#nav-colab, #nav-dash {
+    display: none;
+}
+
+/* Mostra apenas se o body tiver a classe admin */
+body.is-admin #nav-colab,
+body.is-admin #nav-dash {
+    display: flex;
+}
+
+/* ... restante do arquivo style.css enviado anteriormente ... */

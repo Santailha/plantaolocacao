@@ -1,4 +1,4 @@
-/* style.css - Versão Final Isolada */
+/* style.css - Versão Final Isolada e Corrigida */
 
 :root {
     --primary-blue: #3d357e;
@@ -8,12 +8,11 @@
     --border-color: #e2e8f0;
 }
 
-/* Estilos de Reset e Login - Aplicados globalmente ou em classes de login */
+/* Estilos Globais e Login */
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
     background-color: #f0f2f5;
-    color: #1a202c;
 }
 
 .login-wrapper {
@@ -37,10 +36,9 @@ body {
 .login-logo { width: 200px; margin-bottom: 20px; }
 .login-card h2 { color: var(--primary-blue); margin-bottom: 25px; }
 .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; height: 45px; }
-.btn-block { width: 100%; font-weight: bold; cursor: pointer; }
 .login-error { color: var(--danger-red); display: none; margin-top: 10px; font-size: 0.9em; }
 
-/* ESTILOS DO PAINEL (app.html) - Protegidos pela classe .app-container */
+/* --- ESTILOS DO PAINEL (Aplica apenas dentro da app) --- */
 .app-container {
     display: flex;
     height: 100vh;
@@ -71,6 +69,7 @@ body {
     display: flex; 
     gap: 10px;
     align-items: center;
+    transition: all 0.2s;
 }
 
 .nav-item:hover, .nav-item.active {
@@ -88,7 +87,12 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-.main-content { flex: 1; padding: 32px; overflow-y: auto; }
+.main-content { 
+    flex: 1; 
+    padding: 32px; 
+    overflow-y: auto; 
+}
+
 .section { display: none; }
 .section.active { display: block; animation: fadeIn 0.3s; }
 
@@ -106,15 +110,14 @@ h2 { margin-bottom: 20px; color: var(--primary-blue); }
 .dashboard-controls { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 15px; align-items: flex-end; }
 .control-group { display: flex; flex-direction: column; gap: 5px; }
-.control-group label { font-size: 0.85em; font-weight: 600; color: #4a5568; }
 
-/* Botões e Inputs Internos */
+/* Botões e Inputs na App */
 .main-content .btn-primary { background: var(--primary-blue); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; height: 40px; }
 .main-content .btn-secondary { background: white; border: 1px solid #ccc; padding: 10px 20px; border-radius: 6px; cursor: pointer; height: 40px; }
 .main-content input, .main-content select { height: 40px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
 
 /* Tabelas */
-.main-content table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.main-content table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 20px; }
 .main-content th { background: var(--primary-blue); color: white; padding: 15px; text-align: left; }
 .main-content td { padding: 15px; border-bottom: 1px solid #eee; }
 
@@ -122,6 +125,5 @@ h2 { margin-bottom: 20px; color: var(--primary-blue); }
 dialog.modal { border: none; border-radius: 12px; width: 650px; max-width: 95%; background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: auto; }
 .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 .modal-body { padding: 20px; }
-.modal-footer { padding: 20px; border-top: 1px solid #eee; text-align: right; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Santa Ilha - Gestão</title>
-    <link rel="icon" type="image/png" href="img/logo%20mesage.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,11 +24,23 @@
     <main class="main-content">
         <section id="escala" class="section active">
             <h2>Escala de Plantão</h2>
+            
             <div class="calendar-controls">
                 <button class="btn-primary" id="prevMonth">&#8592; Anterior</button>
                 <h3 id="currentMonthLabel">Carregando...</h3>
                 <button class="btn-primary" id="nextMonth">Próximo &#8594;</button>
             </div>
+
+            <div class="calendar-header">
+                <div class="weekday">Dom</div>
+                <div class="weekday">Seg</div>
+                <div class="weekday">Ter</div>
+                <div class="weekday">Qua</div>
+                <div class="weekday">Qui</div>
+                <div class="weekday">Sex</div>
+                <div class="weekday">Sáb</div>
+            </div>
+
             <div class="calendar-grid" id="calendarGrid"></div>
         </section>
 

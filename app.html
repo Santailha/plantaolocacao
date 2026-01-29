@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Santa Ilha - Gestão</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,11 +9,9 @@
 
 <div class="app-container">
     <aside class="sidebar">
-        <div class="sidebar__logo-container">
-            <img src="img/logo%20mesage.png" alt="Santa Ilha Imóveis" class="sidebar__logo-img">
-        </div>
+        <div class="sidebar__logo-container"><img src="img/logo%20mesage.png" class="sidebar__logo-img"></div>
         <nav>
-            <div class="nav-item active" id="nav-escala">📅 Escala / Calendário</div>
+            <div class="nav-item active" id="nav-escala">📅 Escala</div>
             <div class="nav-item" id="nav-colab">👥 Colaboradoras</div>
             <div class="nav-item" id="nav-dash">📊 Dashboard</div>
         </nav>
@@ -24,35 +21,35 @@
     <main class="main-content">
         <section id="escala" class="section active">
             <h2>Escala de Plantão</h2>
-            
             <div class="calendar-controls">
-                <button class="btn-primary" id="prevMonth">&#8592; Anterior</button>
-                <h3 id="currentMonthLabel">Carregando...</h3>
-                <button class="btn-primary" id="nextMonth">Próximo &#8594;</button>
+                <button class="btn-primary" id="prevMonth">&#8592;</button>
+                <h3 id="currentMonthLabel">Mês</h3>
+                <button class="btn-primary" id="nextMonth">&#8594;</button>
             </div>
-
             <div class="calendar-header">
-                <div class="weekday">Dom</div>
-                <div class="weekday">Seg</div>
-                <div class="weekday">Ter</div>
-                <div class="weekday">Qua</div>
-                <div class="weekday">Qui</div>
-                <div class="weekday">Sex</div>
-                <div class="weekday">Sáb</div>
+                <div class="weekday">Dom</div><div class="weekday">Seg</div><div class="weekday">Ter</div>
+                <div class="weekday">Qua</div><div class="weekday">Qui</div><div class="weekday">Sex</div><div class="weekday">Sáb</div>
             </div>
-
             <div class="calendar-grid" id="calendarGrid"></div>
         </section>
 
         <section id="colaboradoras" class="section">
             <h2>Cadastro de Colaboradoras</h2>
             <div class="card-panel">
-                <h4>Novo Cadastro</h4>
                 <div class="form-grid">
-                    <input type="text" placeholder="Nome" id="newAgentName">
-                    <input type="email" placeholder="E-mail" id="newAgentEmail">
-                    <input type="text" placeholder="ID Bitrix" id="newAgentBitrixId">
-                    <button class="btn-secondary" id="btnAddAgent">Salvar</button>
+                    <div class="control-group">
+                        <label>Nome:</label>
+                        <input type="text" id="newAgentName" placeholder="Nome completo">
+                    </div>
+                    <div class="control-group">
+                        <label>E-mail:</label>
+                        <input type="email" id="newAgentEmail" placeholder="email@santailha.com.br">
+                    </div>
+                    <div class="control-group">
+                        <label>ID Bitrix:</label>
+                        <input type="text" id="newAgentBitrixId" placeholder="ID numérico">
+                    </div>
+                    <button class="btn-primary" id="btnAddAgent">Adicionar</button>
                 </div>
             </div>
             <table>
@@ -69,72 +66,24 @@
         </section>
 
         <section id="dashboard" class="section">
-            <div class="header-content" style="margin-bottom: 20px; border-bottom: 2px solid #edae0f; padding-bottom: 10px;">
-                <h2 style="color: #3d357e; margin: 0;">Dashboard de Performance</h2>
-            </div>
-
+            <h2>Dashboard de Performance</h2>
             <div class="dashboard-controls">
-                <div class="control-group">
-                    <label>Início:</label>
-                    <input type="date" id="dashStartDate">
-                </div>
-                <div class="control-group">
-                    <label>Fim:</label>
-                    <input type="date" id="dashEndDate">
-                </div>
-                <button class="btn-primary" id="btnFilterDash">Filtrar Período</button>
+                <div class="control-group"><label>Início:</label><input type="date" id="dashStartDate"></div>
+                <div class="control-group"><label>Fim:</label><input type="date" id="dashEndDate"></div>
+                <button class="btn-primary" id="btnFilterDash">Filtrar</button>
                 <button class="btn-secondary" id="btnClearDash">Hoje</button>
-                
-                <div class="control-group" style="margin-left: auto; min-width: 200px;">
-                    <label>Filtrar Consultora:</label>
-                    <select id="dashAgentFilter">
-                        <option value="todos">Todas as Consultoras</option>
-                    </select>
+                <div class="control-group" style="margin-left:auto">
+                    <label>Consultora:</label>
+                    <select id="dashAgentFilter"><option value="todos">Todas</option></select>
                 </div>
             </div>
-
-            <div id="dashboardContainer" class="card-panel" style="overflow-x: auto; background: white; padding: 0;">
-                <p style="padding: 20px; text-align: center;">Selecione o período para visualizar os dados.</p>
-            </div>
+            <div id="dashboardContainer" class="card-panel"></div>
         </section>
     </main>
 </div>
 
-<dialog id="dayModal" class="modal">
-    <div class="modal-header">
-        <h3 id="modalDateTitle" style="margin:0;">Editar Escala</h3>
-        <button onclick="document.getElementById('dayModal').close()" style="background:none; border:none; cursor:pointer; font-size:1.2em;">&times;</button>
-    </div>
-    <div class="modal-body">
-        <div class="pick-container">
-            <div class="pick-column">
-                <div class="col-header">Disponíveis</div>
-                <div id="listAvailable" class="agent-list"></div>
-            </div>
-            <div class="pick-column" style="border-color: var(--primary-blue);">
-                <div class="col-header" style="background: #eef2ff; color: var(--primary-blue);">Fila de Atendimento</div>
-                <div id="listQueue" class="agent-list"></div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button class="btn-secondary" onclick="document.getElementById('dayModal').close()">Cancelar</button>
-        <button class="btn-primary" id="btnSaveSchedule">Salvar Escala</button>
-    </div>
-</dialog>
-
-<dialog id="leadDetailsModal" class="modal">
-    <div class="modal-header">
-        <h3 id="modalLeadTitle" style="color: #3d357e; margin: 0;">Detalhes dos Leads</h3>
-        <button onclick="document.getElementById('leadDetailsModal').close()" style="border:none; background:none; cursor:pointer; font-size:1.5em;">&times;</button>
-    </div>
-    <div class="modal-body">
-        <div id="leadListContainer" style="max-height: 400px; overflow-y: auto; padding: 10px;"></div>
-    </div>
-    <div class="modal-footer">
-        <button class="btn-secondary" onclick="document.getElementById('leadDetailsModal').close()">Fechar</button>
-    </div>
-</dialog>
+<dialog id="dayModal" class="modal">...</dialog>
+<dialog id="leadDetailsModal" class="modal">...</dialog>
 
 <script type="module" src="script.js"></script>
 </body>

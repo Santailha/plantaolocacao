@@ -2,182 +2,37 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <title>Plantão de Locação</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Santa Ilha - Gestão</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <div class="app-container">
-    <aside class="sidebar" aria-label="Menu lateral">
-      <div class="sidebar__logo-container">
-        <img src="img/logo%20mesage.png" class="sidebar__logo-img" alt="Santa Ilha" />
-      </div>
 
-      <nav class="sidebar__nav" aria-label="Navegação">
-        <button class="nav-item active" id="nav-escala" type="button">📅 <span>Escala</span></button>
-        <button class="nav-item" id="nav-colab" type="button">👥 <span>Colaboradores</span></button>
-        <button class="nav-item" id="nav-dash" type="button">📊 <span>Dashboard</span></button>
+  <div class="app">
+    <aside class="sidebar">
+      <h2>Plantão</h2>
+
+      <nav class="sidebar__menu">
+        <a href="#" class="active">Início</a>
+        <a href="#">Atendimentos</a>
+        <a href="#">Agenda</a>
       </nav>
 
-      <button class="sidebar__logout" id="btn-logout" type="button">Sair</button>
+      <!-- Rodapé da sidebar -->
+      <div class="sidebar__footer">
+        <button class="sidebar__logout" id="btn-logout" type="button">
+          <span class="sidebar__logout-icon" aria-hidden="true">⎋</span>
+          <span>Sair</span>
+        </button>
+      </div>
     </aside>
 
-    <main class="main-content" aria-label="Conteúdo">
-      <!-- Escala -->
-      <section id="escala" class="section active" aria-labelledby="title-escala">
-        <div class="section-header">
-          <h2 id="title-escala">Escala de Plantão</h2>
-
-          <div class="calendar-controls" aria-label="Controles do calendário">
-            <button class="btn-icon" id="prevMonth" type="button" aria-label="Mês anterior">&#8592;</button>
-            <h3 id="currentMonthLabel" class="month-label">Mês</h3>
-            <button class="btn-icon" id="nextMonth" type="button" aria-label="Próximo mês">&#8594;</button>
-          </div>
-        </div>
-
-        <div class="calendar-header" role="row">
-          <div class="weekday" role="columnheader">Dom</div>
-          <div class="weekday" role="columnheader">Seg</div>
-          <div class="weekday" role="columnheader">Ter</div>
-          <div class="weekday" role="columnheader">Qua</div>
-          <div class="weekday" role="columnheader">Qui</div>
-          <div class="weekday" role="columnheader">Sex</div>
-          <div class="weekday" role="columnheader">Sáb</div>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid" aria-label="Calendário"></div>
-      </section>
-
-      <!-- Colaboradoras -->
-      <section id="colaboradoras" class="section" aria-labelledby="title-colab">
-        <h2 id="title-colab">Cadastro de Colaboradoras</h2>
-
-        <div class="card-panel">
-          <div class="form-grid">
-            <div class="control-group">
-              <label for="newAgentName">Nome</label>
-              <input type="text" id="newAgentName" placeholder="Nome completo" autocomplete="name" />
-            </div>
-
-            <div class="control-group">
-              <label for="newAgentEmail">E-mail</label>
-              <input type="email" id="newAgentEmail" placeholder="email@santailha.com.br" autocomplete="email" />
-            </div>
-
-            <div class="control-group">
-              <label for="newAgentBitrixId">ID Bitrix</label>
-              <input type="text" id="newAgentBitrixId" placeholder="ID numérico" inputmode="numeric" />
-            </div>
-
-            <div class="form-actions">
-              <button class="btn-primary" id="btnAddAgent" type="button">Adicionar</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>ID Bitrix</th>
-                <th class="col-actions">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="agentsTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Dashboard -->
-      <section id="dashboard" class="section" aria-labelledby="title-dash">
-        <h2 id="title-dash">Dashboard de Performance</h2>
-
-        <div class="dashboard-controls card-panel">
-          <div class="control-group">
-            <label for="dashStartDate">Início</label>
-            <input type="date" id="dashStartDate" />
-          </div>
-
-          <div class="control-group">
-            <label for="dashEndDate">Fim</label>
-            <input type="date" id="dashEndDate" />
-          </div>
-
-          <div class="control-group">
-            <label for="dashAgentFilter">Consultora</label>
-            <select id="dashAgentFilter">
-              <option value="todos">Todas</option>
-            </select>
-          </div>
-
-          <div class="dash-actions">
-            <button class="btn-primary" id="btnFilterDash" type="button">Filtrar</button>
-            <button class="btn-secondary" id="btnClearDash" type="button">Hoje</button>
-          </div>
-        </div>
-
-        <div id="dashboardContainer" class="dashboard-grid">
-          <!-- preenchido via JS -->
-        </div>
-      </section>
+    <main class="content">
+      <h1>Bem-vindo ao Plantão</h1>
+      <p>Selecione uma opção no menu lateral.</p>
     </main>
   </div>
 
-  <!-- Modal: editar escala do dia -->
-  <dialog id="dayModal" class="modal" aria-labelledby="modalDateTitle">
-    <form method="dialog" class="modal-shell">
-      <div class="modal-header">
-        <h3 id="modalDateTitle">Escala</h3>
-        <button class="btn-icon" value="cancel" aria-label="Fechar">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="modal-grid">
-          <div class="modal-col">
-            <div class="modal-col__title">Disponíveis</div>
-            <div id="listAvailable" class="agent-list" aria-label="Lista de disponíveis"></div>
-          </div>
-
-          <div class="modal-col">
-            <div class="modal-col__title">Fila do dia</div>
-            <div id="listQueue" class="agent-list" aria-label="Fila do dia"></div>
-            <p class="helper-text">
-              Clique em uma colaboradora para adicionar/remover da fila. A ordem define o 1º, 2º, 3º...
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-secondary" value="cancel" type="submit">Cancelar</button>
-        <button class="btn-primary" id="btnSaveSchedule" type="button">Salvar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- Modal: detalhes do lead (estrutura pronta para você usar depois) -->
-  <dialog id="leadDetailsModal" class="modal" aria-labelledby="leadDetailsTitle">
-    <form method="dialog" class="modal-shell">
-      <div class="modal-header">
-        <h3 id="leadDetailsTitle">Detalhes do Lead</h3>
-        <button class="btn-icon" value="cancel" aria-label="Fechar">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div id="leadDetailsBody" class="lead-details">
-          <p class="muted">Selecione um lead no dashboard para ver os detalhes.</p>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-primary" value="cancel" type="submit">Fechar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
